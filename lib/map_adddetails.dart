@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:map/global.dart';
@@ -37,6 +38,39 @@ class _MapAddDetailsState extends State<MapAddDetails> {
     image = await imagePicker.getImage(source: ImageSource.gallery);
     file = File(image.path);
     setState(() {});
+  }
+
+  Set<Marker> _markers = {};
+
+  void onMapCreated(GoogleMapController controller) {
+    _markers.add(
+      Marker(
+          markerId: MarkerId('id - 1'),
+          position: LatLng(23.033863, 72.585022),
+          icon: mapMarker),
+    );
+  }
+
+  BitmapDescriptor mapMarker;
+
+  setCustomMarker() async {
+    mapMarker = await BitmapDescriptor.fromAssetImage(
+        ImageConfiguration(), 'assets/images/pin.png');
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    setCustomMarker();
+    GetCurentLoc();
+  }
+
+  GetCurentLoc() async {
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+    print(position);
+    Global.location = LatLng(position.latitude, position.longitude);
   }
 
   @override
@@ -105,9 +139,8 @@ class _MapAddDetailsState extends State<MapAddDetails> {
                   mapType: MapType.normal,
                   initialCameraPosition: _kGooglePlex,
                   myLocationEnabled: true,
-                  onMapCreated: (GoogleMapController controller) {
-                    _controller.complete(controller);
-                  },
+                  onMapCreated: onMapCreated,
+                  markers: _markers,
                 ),
               ),
               SizedBox(
@@ -168,7 +201,8 @@ class _GetDetailState extends State<GetDetail> {
                       Global.uploadedimag,
                     )),
             Text(Global.title),
-            Text(Global.disc)
+            Text(Global.disc),
+            Text(Global.location.toString())
           ],
         ),
       ),
